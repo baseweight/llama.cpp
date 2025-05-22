@@ -3137,6 +3137,8 @@ static vk_device ggml_vk_get_device(size_t idx) {
         }
 
         if (!vk11_features.storageBuffer16BitAccess) {
+            // We need this for Android, because we don't know until we test if a device has 16-bit storage.
+            GGML_LOG_ERROR("ggml_vulkan: device %s %d does not support 16-bit storage.", GGML_VK_NAME, idx);
             std::cerr << "ggml_vulkan: device " << GGML_VK_NAME << idx << " does not support 16-bit storage." << std::endl;
             throw std::runtime_error("Unsupported device");
         }
