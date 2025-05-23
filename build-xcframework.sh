@@ -11,6 +11,7 @@ LLAMA_BUILD_EXAMPLES=OFF
 LLAMA_BUILD_TOOLS=OFF
 LLAMA_BUILD_TESTS=OFF
 LLAMA_BUILD_SERVER=OFF
+LLAMA_BUILD_COMMON=ON
 GGML_METAL=ON
 GGML_METAL_EMBED_LIBRARY=ON
 GGML_BLAS_DEFAULT=ON
@@ -35,6 +36,7 @@ COMMON_CMAKE_ARGS=(
     -DLLAMA_BUILD_TOOLS=${LLAMA_BUILD_TOOLS}
     -DLLAMA_BUILD_TESTS=${LLAMA_BUILD_TESTS}
     -DLLAMA_BUILD_SERVER=${LLAMA_BUILD_SERVER}
+    -DLLAMA_BUILD_COMMON=${LLAMA_BUILD_COMMON}
     -DGGML_METAL_EMBED_LIBRARY=${GGML_METAL_EMBED_LIBRARY}
     -DGGML_BLAS_DEFAULT=${GGML_BLAS_DEFAULT}
     -DGGML_METAL=${GGML_METAL}
@@ -116,6 +118,7 @@ setup_framework_structure() {
 
     # Copy all required headers (common for all platforms)
     cp include/llama.h             ${header_path}
+    cp include/llama-cpp.h         ${header_path}
     cp ggml/include/ggml.h         ${header_path}
     cp ggml/include/ggml-opt.h     ${header_path}
     cp ggml/include/ggml-alloc.h   ${header_path}
@@ -124,11 +127,17 @@ setup_framework_structure() {
     cp ggml/include/ggml-cpu.h     ${header_path}
     cp ggml/include/ggml-blas.h    ${header_path}
     cp ggml/include/gguf.h         ${header_path}
+    cp tools/mtmd/mtmd.h           ${header_path}
+    cp tools/mtmd/clip.h           ${header_path}
+    cp common/common.h             ${header_path}
+    cp common/chat.h               ${header_path}
+    cp common/sampling.h           ${header_path}
 
     # Create module map (common for all platforms)
     cat > ${module_path}module.modulemap << EOF
 framework module llama {
     header "llama.h"
+    header "llama-cpp.h"
     header "ggml.h"
     header "ggml-alloc.h"
     header "ggml-backend.h"
@@ -136,6 +145,11 @@ framework module llama {
     header "ggml-cpu.h"
     header "ggml-blas.h"
     header "gguf.h"
+    header "mtmd.h"
+    header "clip.h"
+    header "common.h"
+    header "chat.h"
+    header "sampling.h"
 
     link "c++"
     link framework "Accelerate"
@@ -235,6 +249,9 @@ combine_static_libraries() {
     local base_dir="$(pwd)"
     local framework_name="llama"
 
+    echo "Debug: Building for ${platform} (simulator: ${is_simulator})"
+    echo "Debug: Looking for libraries in ${build_dir}/${release_dir}"
+
     # Determine output path based on platform
     local output_lib=""
     if [[ "$platform" == "macos" ]]; then
@@ -252,7 +269,20 @@ combine_static_libraries() {
         "${base_dir}/${build_dir}/ggml/src/${release_dir}/libggml-cpu.a"
         "${base_dir}/${build_dir}/ggml/src/ggml-metal/${release_dir}/libggml-metal.a"
         "${base_dir}/${build_dir}/ggml/src/ggml-blas/${release_dir}/libggml-blas.a"
+        "${base_dir}/${build_dir}/build/mtmd.build/${release_dir}/libmtmd.a"
+        "${base_dir}/${build_dir}/common/${release_dir}/libcommon.a"
     )
+
+    # Debug: Check if each library exists
+    for lib in "${libs[@]}"; do
+        if [ -f "$lib" ]; then
+            echo "Debug: Found library: $lib"
+        else
+            echo "Debug: Missing library: $lib"
+            echo "Debug: Directory contents:"
+            dirname "$lib" | xargs ls -la 2>/dev/null || echo "Directory does not exist"
+        fi
+    done
 
     # Create temporary directory for processing
     local temp_dir="${base_dir}/${build_dir}/temp"
@@ -529,7 +559,7 @@ xcodebuild -create-xcframework \
     -framework $(pwd)/build-ios-device/framework/llama.framework \
     -debug-symbols $(pwd)/build-ios-device/dSYMs/llama.dSYM \
     -framework $(pwd)/build-macos/framework/llama.framework \
-    -debug-symbols $(pwd)/build-macos/dSYMS/llama.dSYM \
+    -debug-symbols $(pwd)/build-macos/dSYMs/llama.dSYM \
     -framework $(pwd)/build-visionos/framework/llama.framework \
     -debug-symbols $(pwd)/build-visionos/dSYMs/llama.dSYM \
     -framework $(pwd)/build-visionos-sim/framework/llama.framework \

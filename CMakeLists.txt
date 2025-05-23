@@ -188,6 +188,9 @@ if (LLAMA_BUILD_COMMON AND LLAMA_BUILD_EXAMPLES)
     add_subdirectory(pocs)
 endif()
 
+# Always build mtmd library
+add_subdirectory(tools/mtmd)
+
 if (LLAMA_BUILD_COMMON AND LLAMA_BUILD_TOOLS)
     add_subdirectory(tools)
 endif()
