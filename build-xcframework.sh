@@ -269,7 +269,7 @@ combine_static_libraries() {
         "${base_dir}/${build_dir}/ggml/src/${release_dir}/libggml-cpu.a"
         "${base_dir}/${build_dir}/ggml/src/ggml-metal/${release_dir}/libggml-metal.a"
         "${base_dir}/${build_dir}/ggml/src/ggml-blas/${release_dir}/libggml-blas.a"
-        "${base_dir}/${build_dir}/build/mtmd.build/${release_dir}/libmtmd.a"
+        "${base_dir}/${build_dir}/tools/mtmd/${release_dir}/libmtmd.a"
         "${base_dir}/${build_dir}/common/${release_dir}/libcommon.a"
     )
 
