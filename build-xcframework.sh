@@ -128,6 +128,7 @@ setup_framework_structure() {
     cp ggml/include/ggml-blas.h    ${header_path}
     cp ggml/include/gguf.h         ${header_path}
     cp tools/mtmd/mtmd.h           ${header_path}
+    cp tools/mtmd/mtmd-helper.h    ${header_path}
     cp tools/mtmd/clip.h           ${header_path}
     cp common/common.h             ${header_path}
     cp common/chat.h               ${header_path}
@@ -146,6 +147,7 @@ framework module llama {
     header "ggml-blas.h"
     header "gguf.h"
     header "mtmd.h"
+    header "mtmd-helper.h"
     header "clip.h"
     header "common.h"
     header "chat.h"
