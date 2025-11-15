@@ -5740,7 +5740,7 @@ class Gemma2Model(TextModel):
         return [(self.map_tensor_name(name), data_torch)]
 
 
-@ModelBase.register("Gemma3ForCausalLM", "Gemma3ForConditionalGeneration")
+@ModelBase.register("Gemma3ForCausalLM", "Gemma3ForConditionalGeneration", "ShieldGemma2ForImageClassification")
 class Gemma3Model(TextModel):
     model_arch = gguf.MODEL_ARCH.GEMMA3
     norm_shift = 1.0  # Gemma3RMSNorm adds 1.0 to the norm value
@@ -5778,12 +5778,16 @@ class Gemma3Model(TextModel):
     def modify_tensors(self, data_torch: Tensor, name: str, bid: int | None) -> Iterable[tuple[str, Tensor]]:
         del bid  # unused
 
-        if "language_model." in name:
-            name = name.replace("language_model.", "")
-
-        elif name.startswith("multi_modal_projector.") or name.startswith("vision_tower.") \
-                or name.startswith("multimodal_projector.") or name.startswith("vision_model."):
+        # Skip vision tensors (check before prefix removal)
+        if "multi_modal_projector." in name or "vision_tower." in name \
+                or "multimodal_projector." in name or "vision_model." in name:
             return [] # skip vision tensors
+
+        # Handle ShieldGemma2 prefix
+        if name.startswith("model.language_model."):
+            name = name.replace("model.language_model.", "")
+        elif "language_model." in name:
+            name = name.replace("language_model.", "")
 
         # remove OOV (out-of-vocabulary) rows in token_embd
         if "embed_tokens.weight" in name:
@@ -5874,7 +5878,7 @@ class EmbeddingGemma(Gemma3Model):
         self._try_set_pooling_type()
 
 
-@ModelBase.register("Gemma3ForConditionalGeneration")
+@ModelBase.register("Gemma3ForConditionalGeneration", "ShieldGemma2ForImageClassification")
 class Gemma3VisionModel(MmprojModel):
     def set_gguf_parameters(self):
         super().set_gguf_parameters()
@@ -5907,6 +5911,10 @@ class Gemma3VisionModel(MmprojModel):
 
         if "vision_model.head." in name:
             return [] # skip redundant tensors for tinygemma3
+
+        # Handle ShieldGemma2 prefix
+        if name.startswith("model."):
+            name = name.replace("model.", "", 1)
 
         if name.startswith("multi_modal_projector.") or name.startswith("vision_tower.") \
                 or name.startswith("multimodal_projector.") or name.startswith("vision_model."):
