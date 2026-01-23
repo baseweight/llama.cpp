@@ -133,6 +133,11 @@ setup_framework_structure() {
     cp common/common.h             ${header_path}
     cp common/chat.h               ${header_path}
     cp common/sampling.h           ${header_path}
+    cp common/peg-parser.h         ${header_path}
+
+    # Copy nlohmann JSON header (preserving directory structure)
+    mkdir -p ${header_path}/nlohmann
+    cp vendor/nlohmann/json_fwd.hpp ${header_path}/nlohmann/
 
     # Create module map (common for all platforms)
     cat > ${module_path}module.modulemap << EOF
@@ -152,6 +157,7 @@ framework module llama {
     header "common.h"
     header "chat.h"
     header "sampling.h"
+    header "peg-parser.h"
 
     link "c++"
     link framework "Accelerate"
@@ -446,7 +452,8 @@ cmake -B build-ios-sim -G Xcode \
     -DCMAKE_XCODE_ATTRIBUTE_SUPPORTED_PLATFORMS=iphonesimulator \
     -DCMAKE_C_FLAGS="${COMMON_C_FLAGS}" \
     -DCMAKE_CXX_FLAGS="${COMMON_CXX_FLAGS}" \
-    -DLLAMA_CURL=OFF \
+    -DLLAMA_OPENSSL=OFF \
+    -DLLAMA_HTTPLIB=OFF \
     -S .
 cmake --build build-ios-sim --config Release -- -quiet
 
@@ -460,7 +467,8 @@ cmake -B build-ios-device -G Xcode \
     -DCMAKE_XCODE_ATTRIBUTE_SUPPORTED_PLATFORMS=iphoneos \
     -DCMAKE_C_FLAGS="${COMMON_C_FLAGS}" \
     -DCMAKE_CXX_FLAGS="${COMMON_CXX_FLAGS}" \
-    -DLLAMA_CURL=OFF \
+    -DLLAMA_OPENSSL=OFF \
+    -DLLAMA_HTTPLIB=OFF \
     -S .
 cmake --build build-ios-device --config Release -- -quiet
 
@@ -471,7 +479,8 @@ cmake -B build-macos -G Xcode \
     -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
     -DCMAKE_C_FLAGS="${COMMON_C_FLAGS}" \
     -DCMAKE_CXX_FLAGS="${COMMON_CXX_FLAGS}" \
-    -DLLAMA_CURL=OFF \
+    -DLLAMA_OPENSSL=OFF \
+    -DLLAMA_HTTPLIB=OFF \
     -S .
 cmake --build build-macos --config Release -- -quiet
 
@@ -485,7 +494,7 @@ cmake -B build-visionos -G Xcode \
     -DCMAKE_XCODE_ATTRIBUTE_SUPPORTED_PLATFORMS=xros \
     -DCMAKE_C_FLAGS="-D_XOPEN_SOURCE=700 ${COMMON_C_FLAGS}" \
     -DCMAKE_CXX_FLAGS="-D_XOPEN_SOURCE=700 ${COMMON_CXX_FLAGS}" \
-    -DLLAMA_CURL=OFF \
+    -DLLAMA_OPENSSL=OFF \
     -DLLAMA_HTTPLIB=OFF \
     -DLLAMA_BUILD_SERVER=OFF \
     -S .
@@ -501,7 +510,7 @@ cmake -B build-visionos-sim -G Xcode \
     -DCMAKE_XCODE_ATTRIBUTE_SUPPORTED_PLATFORMS=xrsimulator \
     -DCMAKE_C_FLAGS="-D_XOPEN_SOURCE=700 ${COMMON_C_FLAGS}" \
     -DCMAKE_CXX_FLAGS="-D_XOPEN_SOURCE=700 ${COMMON_CXX_FLAGS}" \
-    -DLLAMA_CURL=OFF \
+    -DLLAMA_OPENSSL=OFF \
     -DLLAMA_HTTPLIB=OFF \
     -DLLAMA_BUILD_SERVER=OFF \
     -S .
@@ -519,7 +528,8 @@ cmake -B build-tvos-sim -G Xcode \
     -DCMAKE_XCODE_ATTRIBUTE_SUPPORTED_PLATFORMS=appletvsimulator \
     -DCMAKE_C_FLAGS="${COMMON_C_FLAGS}" \
     -DCMAKE_CXX_FLAGS="${COMMON_CXX_FLAGS}" \
-    -DLLAMA_CURL=OFF \
+    -DLLAMA_OPENSSL=OFF \
+    -DLLAMA_HTTPLIB=OFF \
     -S .
 cmake --build build-tvos-sim --config Release -- -quiet
 
@@ -534,7 +544,8 @@ cmake -B build-tvos-device -G Xcode \
     -DCMAKE_XCODE_ATTRIBUTE_SUPPORTED_PLATFORMS=appletvos \
     -DCMAKE_C_FLAGS="${COMMON_C_FLAGS}" \
     -DCMAKE_CXX_FLAGS="${COMMON_CXX_FLAGS}" \
-    -DLLAMA_CURL=OFF \
+    -DLLAMA_OPENSSL=OFF \
+    -DLLAMA_HTTPLIB=OFF \
     -S .
 cmake --build build-tvos-device --config Release -- -quiet
 

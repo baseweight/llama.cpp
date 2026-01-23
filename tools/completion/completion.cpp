@@ -87,9 +87,6 @@ int main(int argc, char ** argv) {
     common_params params;
     g_params = &params;
 
-    // disable jinja by default
-    params.use_jinja = false;
-
     if (!common_params_parse(argc, argv, params, LLAMA_EXAMPLE_COMPLETION, print_usage)) {
         return 1;
     }
@@ -141,13 +138,15 @@ int main(int argc, char ** argv) {
 
     // load the model and apply lora adapter, if any
     LOG_INF("%s: load the model and apply lora adapter, if any\n", __func__);
-    common_init_result llama_init = common_init_from_params(params);
 
-    model = llama_init.model.get();
-    ctx = llama_init.context.get();
+    auto llama_init = common_init_from_params(params);
 
-    if (model == NULL) {
-        LOG_ERR("%s: error: unable to load model\n", __func__);
+    ctx   = llama_init->context();
+    model = llama_init->model();
+    smpl  = llama_init->sampler(0);
+
+    if (ctx == NULL) {
+        LOG_ERR("%s: error: unable to create context\n", __func__);
         return 1;
     }
 
@@ -176,7 +175,10 @@ int main(int argc, char ** argv) {
     struct ggml_threadpool_params tpp =
             ggml_threadpool_params_from_cpu_params(params.cpuparams);
 
-    set_process_priority(params.cpuparams.priority);
+    if (!set_process_priority(params.cpuparams.priority)) {
+        LOG_ERR("%s: error: failed to set process priority\n", __func__);
+        return 1;
+    }
 
     struct ggml_threadpool * threadpool_batch = NULL;
     if (!ggml_threadpool_params_match(&tpp, &tpp_batch)) {
@@ -472,12 +474,6 @@ int main(int argc, char ** argv) {
                 }
             }
         }
-    }
-
-    smpl = common_sampler_init(model, sparams);
-    if (!smpl) {
-        LOG_ERR("%s: failed to initialize sampling subsystem\n", __func__);
-        return 1;
     }
 
     LOG_INF("sampler seed: %u\n",     common_sampler_get_seed(smpl));
@@ -992,8 +988,6 @@ int main(int argc, char ** argv) {
 
     LOG("\n\n");
     common_perf_print(ctx, smpl);
-
-    common_sampler_free(smpl);
 
     llama_backend_free();
 
